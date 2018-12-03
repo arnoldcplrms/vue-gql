@@ -20,6 +20,15 @@
 						{{item.title}}
 					</v-list-tile-content>
 				</v-list-tile>
+				<!-- Sign out button -->
+				<v-list-tile v-if="user" @click="handleUserSignOut">
+					<v-list-tile-action>
+						<v-icon>exit_to_app</v-icon>
+					</v-list-tile-action>
+					<v-list-tile-content>
+						Signout
+					</v-list-tile-content>
+				</v-list-tile>
 			</v-list>
 		</v-navigation-drawer>
 
@@ -46,6 +55,21 @@
 					<v-icon class="hidden-sm-only" left>{{item.icon}}</v-icon>
 					{{item.title}}
 				</v-btn>
+
+				<!-- Profile button -->
+				<v-btn flat to="/profile" v-if="user">
+					<v-icon class="hidden-sm-only" left>account_box</v-icon>
+					<v-badge right color="accent">
+						<!-- <span slot="badge">1</span> -->
+						Profile
+					</v-badge>
+				</v-btn>
+
+				<!-- Signout button -->
+				<v-btn flat v-if="user" @click="handleUserSignOut">
+					<v-icon class="hidden-sm-only">exit_to_app</v-icon>
+					Signout
+				</v-btn>
 			</v-toolbar-items>
 		</v-toolbar>
 
@@ -55,33 +79,80 @@
 				<transition name="fade">
 					<router-view />
 				</transition>
+
+				<!-- Auth snack bar -->
+				<v-snackbar color="success" v-model="authSnackBar" :timeout="5000" bottom left>
+					<v-icon class="mr-3">check_circle</v-icon>
+					<h3>You are now signed in!</h3>
+					<v-btn dark flat @click="authSnackBar = false">Close</v-btn>
+				</v-snackbar>
+
+				<!-- Auth Error snack bar -->
+				<v-snackbar v-if="authError" color="info" v-model="authErrorSnackBar" :timeout="5000" bottom left>
+					<v-icon class="mr-3">cancel</v-icon>
+					<h3>{{authError.message}}</h3>
+					<v-btn dark flat to="/signin">Signin</v-btn>
+				</v-snackbar>
 			</v-container>
 		</main>
 	</v-app>
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 export default {
 	name: "app",
 	data() {
 		return {
-			sideNav: false
+			sideNav: false,
+			authSnackBar: false,
+			authErrorSnackBar: false
 		}
 	},
 	computed: {
+		...mapGetters(['authError', 'user']),
 		horizontalNavItems() {
-			return [
+			// change the navbar state if the user is authenticated
+			let items = [
 				{ icon: "chat", title: "Posts", link: "/posts" },
 				{ icon: "lock_open", title: "Sign in", link: "/signin" },
 				{ icon: "create", title: "Sign Up", link: "/signup" },
 			]
+			if (this.user)
+				items = [{ icon: "chat", title: "Posts", link: "/posts" }]
+
+			return items;
 		},
 		sideNavItems() {
-			return [
+			// change the side navbar state if the user is authenticated
+			let items = [
 				{ icon: "chat", title: "Posts", link: "/posts" },
 				{ icon: "lock_open", title: "Sign in", link: "/signin" },
 				{ icon: "create", title: "Sign Up", link: "/signup" },
 			]
+			if (this.user)
+				items = [
+					{ icon: "chat", title: "Posts", link: "/posts" },
+					{ icon: "stars", title: "Create Posts", link: "/posts/add" },
+					{ icon: "account_box", title: "Profile", link: "/profile" },
+				]
+
+			return items
+		}
+	},
+	methods: {
+		handleUserSignOut() {
+			this.$store.dispatch('signoutUser')
+		}
+	},
+	watch: {
+		user(newValue, oldValue) {
+			//if we had no value for the user before, show snackbar
+			if (oldValue === null) this.authSnackBar = true
+		},
+		authError(value) {
+			//if auth error is not null, show auth error message
+			if (value !== null) this.authErrorSnackBar = true;
 		}
 	}
 }

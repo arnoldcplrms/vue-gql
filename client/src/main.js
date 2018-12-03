@@ -6,7 +6,10 @@ import store from './store'
 
 import ApolloClient from 'apollo-boost'
 import VueApollo from 'vue-apollo'
-import { createProvider } from './vue-apollo'
+//import { createProvider } from './vue-apollo'
+import FormAlert from './components/Shared/FormAlert';
+
+Vue.component('form-alert', FormAlert);
 
 Vue.use(VueApollo);
 
@@ -26,12 +29,21 @@ export const defaultClient = new ApolloClient({
             }
         })
     },
-    onError: ({ graphQlErrors, networkError }) => {
+    onError: ({ graphQLErrors, networkError }) => {
+        const errors = graphQLErrors;
+        console.log('graphQlErrors', graphQLErrors);
         if (networkError) console.log('[networkError]', networkError);
-        if (graphQlErrors)
-            for (const err of graphQlErrors) {
-                console.dir(err);
+        if (errors) {
+            for (const err of errors) {
+                console.dir(err.name);
+                if (err.name === 'AuthenticationError') {
+                    //set auth error in state (to show in snackbar)
+                    store.commit('setAuthError', err);
+                    //signout user (to clear token)
+                    store.dispatch('signoutUser')
+                }
             }
+        }
     }
 });
 

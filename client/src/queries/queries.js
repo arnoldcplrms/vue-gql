@@ -30,15 +30,15 @@ export const SIGNUP_USER = gql `
 `
 
 export const GET_CURRENT_USER = gql `
-    query{
-        getCurrentUser{
+    query {
+        getCurrentUser {
             _id
             username
             email
             password
             avatar
             joinDate
-            favorites{
+            favorites {
                 _id
                 title
                 imageUrl
